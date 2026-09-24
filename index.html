@@ -83,6 +83,10 @@
     <div id="results" class="results"></div>
 
     <script>
+        // Proxy URL for CORS bypass (if direct fetch fails)
+        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+        const DIRECT_API = 'https://ansh-apis.is-dev.org/api/printrest';
+
         async function searchImages() {
             const query = document.getElementById('search').value.trim();
             if (!query) return;
@@ -96,8 +100,28 @@
             loadingDiv.style.display = 'block';
 
             try {
-                const url = `https://ansh-apis.is-dev.org/api/printrest?key=ansh&search=${encodeURIComponent(query)}`;
-                const response = await fetch(url);
+                const apiUrl = `${DIRECT_API}?key=ansh&search=${encodeURIComponent(query)}`;
+                
+                // Try direct fetch with CORS mode
+                let response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // If direct fetch fails due to CORS, try with proxy
+                if (!response.ok) {
+                    console.log('Direct fetch failed, trying proxy...');
+                    response = await fetch(`${PROXY_URL}${apiUrl}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,7 +139,7 @@
                 displayResults(data);
             } catch (error) {
                 loadingDiv.style.display = 'none';
-                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.textContent = `Error: ${error.message}. Please check your internet connection or try again later.`;
                 errorDiv.style.display = 'block';
                 console.error('Fetch error:', error);
             }
@@ -125,15 +149,29 @@
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
 
-            images.forEach(img => {
+            // Handle different API response formats
+            const imageList = Array.isArray(images) ? images : 
+                           (images.data && Array.isArray(images.data) ? images.data : 
+                           (images.results && Array.isArray(images.results) ? images.results : []));
+
+            if (!imageList.length) {
+                document.getElementById('error').textContent = 'No images found in response.';
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+
+            imageList.forEach(img => {
                 const card = document.createElement('div');
                 card.className = 'image-card';
 
                 const imgElement = document.createElement('img');
-                imgElement.src = img.url || img.image || img;
-                imgElement.alt = img.alt || 'Search result';
+                // Extract URL from various possible response structures
+                const imageUrl = img.url || img.image || img.image_url || img.src || img.thumbnail || img;
+                imgElement.src = imageUrl;
+                imgElement.alt = img.alt || img.title || img.description || 'Search result';
                 imgElement.onerror = () => {
-                    imgElement.style.display = 'none';
+                    imgElement.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="250" height="200" viewBox="0 0 250 200"%3E%3Crect width="250" height="200" fill="%23ddd"/%3E%3Ctext x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999"%3EImage not available%3C/text%3E%3C/svg%3E';
+                    imgElement.style.objectFit = 'contain';
                 };
 
                 card.appendChild(imgElement);
