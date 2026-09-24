@@ -3,354 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Search - AI Powered</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Image Search</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #f8fafc;
-            min-height: 100vh;
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'Inter',sans-serif;
+            background:#0f172a;
+            color:#fff;
+            min-height:100vh;
         }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .container{max-width:1200px;margin:0 auto;padding:20px}
+        h1{text-align:center;font-size:2.5rem;margin:20px 0;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .search-box{
+            max-width:600px;margin:0 auto 30px;
+            position:relative;display:flex;gap:10px
         }
-
-        .image-card {
-            transition: all 0.3s ease;
-            opacity: 0;
-            animation: fadeIn 0.5s ease forwards;
+        .search-box input{
+            flex:1;padding:15px 20px;border-radius:50px;border:none;
+            background:rgba(255,255,255,0.05);color:#fff;font-size:1rem;
+            outline:none;box-shadow:0 2px 10px rgba(0,0,0,0.2)
         }
-
-        .image-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 25px rgba(0,0,0,0.5);
+        .search-box input::placeholder{color:#9ca3af}
+        .search-box button{
+            padding:0 25px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+            border:none;border-radius:50px;color:#fff;font-weight:600;
+            cursor:pointer;transition:.2s
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .search-box button:hover{opacity:.9}
+        .suggestions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0}
+        .chip{
+            padding:8px 16px;background:rgba(255,255,255,0.08);
+            border-radius:20px;font-size:.9rem;cursor:pointer;
+            transition:.2s
         }
-
-        .image-card:nth-child(1) { animation-delay: 0.05s; }
-        .image-card:nth-child(2) { animation-delay: 0.1s; }
-        .image-card:nth-child(3) { animation-delay: 0.15s; }
-        .image-card:nth-child(4) { animation-delay: 0.2s; }
-        .image-card:nth-child(5) { animation-delay: 0.25s; }
-        .image-card:nth-child(6) { animation-delay: 0.3s; }
-        .image-card:nth-child(7) { animation-delay: 0.35s; }
-        .image-card:nth-child(8) { animation-delay: 0.4s; }
-
-        .loader {
-            border: 4px solid rgba(255,255,255,0.1);
-            border-left-color: #3b82f6;
-            animation: spin 1s linear infinite;
+        .chip:hover{background:rgba(59,130,246,0.2)}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:20px}
+        .card{
+            position:relative;border-radius:16px;overflow:hidden;
+            background:rgba(255,255,255,0.05);transition:.3s;
+            aspect-ratio:1
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .card:hover{transform:translateY(-5px)scale(1.02)}
+        .card img{width:100%;height:100%;object-fit:cover}
+        .card .overlay{
+            position:absolute;bottom:0;left:0;right:0;padding:15px;
+            background:linear-gradient(transparent,rgba(0,0,0,0.8));
+            opacity:0;transition:.3s
         }
-
-        .masonry-grid {
-            column-count: 1;
-            column-gap: 1.5rem;
-        }
-        @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
-        @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
-        @media (min-width: 1280px) { .masonry-grid { column-count: 4; } }
-
-        .masonry-item {
-            break-inside: avoid;
-            margin-bottom: 1.5rem;
-        }
-
-        .suggestion-chip {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            transition: all 0.2s;
-        }
-        .suggestion-chip:hover {
-            border-color: #3b82f6;
-            background: rgba(59,130,246,0.1);
-        }
-
-        .upload-area {
-            border: 2px dashed rgba(255,255,255,0.2);
-            transition: all 0.2s;
-        }
-        .upload-area:hover {
-            border-color: #3b82f6;
-            background: rgba(59,130,246,0.05);
+        .card:hover .overlay{opacity:1}
+        .card .title{color:#fff;font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .card .meta{display:flex;gap:10px;font-size:.8rem;color:#9ca3af}
+        .loader{text-align:center;padding:40px}
+        .spinner{border:3px solid rgba(255,255,255,0.1);border-top-color:#3b82f6;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .error{text-align:center;padding:40px;color:#fca5a5}
+        @media(max-width:768px){
+            .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+            h1{font-size:1.8rem}
         }
     </style>
 </head>
-<body class="relative overflow-x-hidden">
-    <!-- Background -->
-    <div class="fixed inset-0 -z-10 overflow-hidden">
-        <div class="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-blue-600/20 blur-3xl"></div>
-        <div class="absolute top-1/2 -right-1/4 w-1/3 h-2/3 rounded-full bg-purple-600/20 blur-3xl"></div>
+<body>
+    <div class="container">
+        <h1>Image Search</h1>
+        <div class="search-box">
+            <input type="text" id="query" placeholder="Search for images...">
+            <button onclick="search()">Search</button>
+        </div>
+        <div class="suggestions">
+            <span class="chip" onclick="suggest('nature')">Nature</span>
+            <span class="chip" onclick="suggest('cars')">Cars</span>
+            <span class="chip" onclick="suggest('space')">Space</span>
+            <span class="chip" onclick="suggest('animals')">Animals</span>
+            <span class="chip" onclick="suggest('food')">Food</span>
+            <span class="chip" onclick="suggest('architecture')">Architecture</span>
+        </div>
+        <div id="results" class="grid"></div>
+        <div id="loading" class="loader" style="display:none">
+            <div class="spinner"></div>
+            <p style="margin-top:10px;color:#9ca3af">Loading...</p>
+        </div>
+        <div id="error" class="error" style="display:none"></div>
     </div>
-
-    <main class="container mx-auto px-4 py-12 max-w-7xl">
-        <!-- Header -->
-        <header class="text-center mb-16 space-y-6">
-            <h1 class="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-                Discover Aesthetics
-            </h1>
-            <p class="text-slate-400 max-w-2xl mx-auto text-lg">
-                Search through millions of high-quality images
-            </p>
-
-            <!-- Search Form -->
-            <form id="searchForm" class="max-w-2xl mx-auto mt-8 relative">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                    <i class="fas fa-search text-xl"></i>
-                </div>
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Search for nature, space, cars..."
-                    class="w-full pl-12 pr-32 py-4 rounded-2xl glass text-lg outline-none placeholder-slate-500"
-                    autocomplete="off"
-                    required
-                >
-                <button 
-                    type="submit" 
-                    class="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-semibold flex items-center gap-2"
-                >
-                    <span>Search</span>
-                    <span>✨</span>
-                </button>
-            </form>
-
-            <!-- Upload Area -->
-            <div class="upload-area mt-6 p-4 rounded-2xl cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                <div class="text-blue-400 mb-2"><i class="fas fa-cloud-upload-alt text-2xl"></i></div>
-                <div class="text-slate-400 text-sm">Drag & drop or click to upload</div>
-                <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleUpload(event)">
-            </div>
-
-            <!-- Suggestions -->
-            <div class="flex flex-wrap gap-3 justify-center mt-8">
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('nature')">Nature</span>
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('space')">Space</span>
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('cars')">Cars</span>
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('architecture')">Architecture</span>
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('animals')">Animals</span>
-                <span class="suggestion-chip px-4 py-2 rounded-full text-sm" onclick="search('food')">Food</span>
-            </div>
-        </header>
-
-        <!-- Loading -->
-        <div id="loader" class="hidden flex-col items-center justify-center py-20 space-y-4">
-            <div class="w-12 h-12 rounded-full loader"></div>
-            <p class="text-slate-400">Searching images...</p>
-        </div>
-
-        <!-- Error -->
-        <div id="error" class="hidden text-center py-10">
-            <div class="text-red-400 text-4xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
-            <h2 class="text-2xl font-bold text-red-400">Error</h2>
-            <p id="errorMsg" class="text-slate-400 mt-2"></p>
-        </div>
-
-        <!-- Empty -->
-        <div id="empty" class="hidden text-center py-10">
-            <div class="text-slate-500 text-5xl mb-4"><i class="far fa-image"></i></div>
-            <h2 class="text-2xl font-bold text-slate-300">No results</h2>
-            <p class="text-slate-400 mt-2">Try a different search</p>
-        </div>
-
-        <!-- Results -->
-        <div id="results" class="masonry-grid hidden"></div>
-    </main>
-
     <script>
-        const form = document.getElementById('searchForm');
-        const input = document.getElementById('searchInput');
+        const API_URL = 'https://ansh-apis.is-dev.org/api/printrest?key=ansh&search=';
+        const input = document.getElementById('query');
         const results = document.getElementById('results');
-        const loader = document.getElementById('loader');
+        const loading = document.getElementById('loading');
         const error = document.getElementById('error');
-        const empty = document.getElementById('empty');
-        const errorMsg = document.getElementById('errorMsg');
 
-        // Search function
-        function search(query) {
-            input.value = query;
-            form.dispatchEvent(new Event('submit'));
+        function suggest(q){input.value=q;search()}
+
+        function search(){
+            const q = input.value.trim();
+            if(!q)return;
+            results.innerHTML='';
+            loading.style.display='block';
+            error.style.display='none';
+
+            fetch(API_URL+encodeURIComponent(q))
+                .then(r=>r.json())
+                .then(data=>{
+                    displayResults(data);
+                })
+                .catch(err=>{
+                    error.textContent='Failed to load. Using sample images.';
+                    error.style.display='block';
+                    displayResults(generateMock());
+                })
+                .finally(()=>{loading.style.display='none'})
         }
 
-        // Handle upload
-        function handleUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                alert('Image: ' + file.name + '\nVisual search would be performed');
-                e.target.value = '';
-            }
-        }
+        function displayResults(images){
+            if(!images||!images.length)images=generateMock();
+            if(!Array.isArray(images))images=[images];
 
-        // Format number
-        function formatNumber(n) {
-            if (n > 1000000) return (n/1000000).toFixed(1) + 'M';
-            if (n > 1000) return (n/1000).toFixed(1) + 'K';
-            return n;
-        }
-
-        // Fetch images - MULTIPLE API FALLBACK
-        async function fetchImages(query, page = 1) {
-            const APIs = [
-                // Primary API
-                `https://shreevibesbackend-production.up.railway.app/api/v1/search?q=${encodeURIComponent(query)}&page=${page}&per_page=20`,
-                // Secondary API
-                `https://ansh-apis.is-dev.org/api/printrest?key=ansh&search=${encodeURIComponent(query)}`,
-                // Tertiary - Pexels (no key needed for demo)
-                `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=20`
-            ];
-
-            for (const apiUrl of APIs) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        headers: apiUrl.includes('pexels') ? {
-                            'Authorization': 'YOUR_PEXELS_KEY' // Add your key here
-                        } : {}
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        // Extract images based on API response
-                        let images = [];
-                        
-                        if (apiUrl.includes('shreevibesbackend')) {
-                            images = data.results || [];
-                        } else if (apiUrl.includes('ansh-apis')) {
-                            images = Array.isArray(data) ? data : (data.images || data.results || []);
-                        } else if (apiUrl.includes('pexels')) {
-                            images = data.photos || [];
-                        }
-                        
-                        if (images.length > 0) return images;
-                    }
-                } catch (e) {
-                    console.log('API failed:', apiUrl, e.message);
-                    continue;
-                }
-            }
-
-            // Fallback to mock data if all APIs fail
-            return generateMockImages(query);
-        }
-
-        // Generate mock images
-        function generateMockImages(query) {
-            const categories = ['nature', 'space', 'cars', 'architecture', 'animals', 'food', 'technology'];
-            const descs = ['Beautiful', 'Stunning', 'Amazing', 'Incredible', 'Breathtaking', 'Wonderful'];
-            const authors = ['Alex', 'Sarah', 'Mike', 'Emma', 'John', 'Lisa'];
-            
-            const images = [];
-            for (let i = 0; i < 20; i++) {
-                const cat = categories.includes(query.toLowerCase()) ? query.toLowerCase() : categories[Math.floor(Math.random() * categories.length)];
-                const w = [400, 600, 800, 300][Math.floor(Math.random() * 4)];
-                const h = [300, 400, 500, 600][Math.floor(Math.random() * 4)];
+            images.slice(0,20).forEach((img,i)=>{// Limit to 20
+                const card=document.createElement('div');
+                card.className='card';
+                card.style.animationDelay=`${i*0.05}s`;
                 
-                images.push({
-                    url: `https://source.unsplash.com/random/${w}x${h}/?${cat}`,
-                    title: `${descs[Math.floor(Math.random() * descs.length)]} ${cat}`,
-                    author: authors[Math.floor(Math.random() * authors.length)],
-                    likes: Math.floor(Math.random() * 10000)
-                });
-            }
-            return images;
-        }
+                const url=img.url||img.image||img.thumb||img.src||img;
+                const title=img.title||img.name||img.alt||'Image';
+                const author=img.author||img.user||'Unknown';
 
-        // Render images
-        function renderImages(images) {
-            results.innerHTML = '';
-            
-            if (images.length === 0) {
-                empty.classList.remove('hidden');
-                return;
-            }
-            
-            results.classList.remove('hidden');
-            empty.classList.add('hidden');
-            
-            images.forEach((img, index) => {
-                const card = document.createElement('div');
-                card.className = 'masonry-item image-card relative rounded-2xl overflow-hidden group cursor-pointer glass';
-                
-                const aspect = img.height && img.width ? (img.height / img.width) * 100 : 75;
-                
-                card.innerHTML = `
-                    <div class="relative w-full bg-slate-800" style="padding-bottom: ${aspect}%;">
-                        <img 
-                            src="${img.url || img.large || img.thumb || img.src}"
-                            alt="${img.title || 'Image'}"
-                            loading="lazy"
-                            class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        >
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                            <div class="transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                                <h3 class="text-white font-semibold line-clamp-1">${img.title || 'Untitled'}</h3>
-                                <div class="flex justify-between items-center mt-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
-                                            ${(img.author || 'U')[0].toUpperCase()}
-                                        </div>
-                                        <span class="text-slate-300 text-sm">${img.author || 'Unknown'}</span>
-                                    </div>
-                                    ${img.likes !== undefined ? `
-                                        <div class="flex items-center gap-1 text-pink-400 bg-pink-500/10 px-2 py-1 rounded">
-                                            <i class="fas fa-heart text-xs"></i>
-                                            <span class="text-xs font-bold">${formatNumber(img.likes)}</span>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
+                card.innerHTML=`
+                    <img src="${url}" alt="${title}" loading="lazy">
+                    <div class="overlay">
+                        <div class="title">${title}</div>
+                        <div class="meta">
+                            <span>${author}</span>
                         </div>
                     </div>
                 `;
-                
-                card.onclick = () => {
-                    if (img.url) window.open(img.url, '_blank');
-                };
-                
+                card.onclick=()=>url&&window.open(url,'_blank');
                 results.appendChild(card);
             });
         }
 
-        // Form submit
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const query = input.value.trim();
-            if (!query) return;
+        function generateMock(){
+            const cats=['nature','cars','space','animals','food','architecture','technology'];
+            return Array.from({length:20},(_,i)=>({
+                url:`https://source.unsplash.com/random/400x400/?${cats[i%cats.length]},${i}`,
+                title:`${cats[i%cats.length].charAt(0).toUpperCase()}${cats[i%cats.length].slice(1)} Image`,
+                author:['Alex','Sarah','Mike','Emma'][i%4]
+            }));
+        }
 
-            // Show loading
-            loader.classList.remove('hidden');
-            results.classList.add('hidden');
-            error.classList.add('hidden');
-            empty.classList.add('hidden');
-
-            try {
-                const images = await fetchImages(query);
-                renderImages(images);
-            } catch (err) {
-                errorMsg.textContent = err.message || 'Failed to fetch images';
-                error.classList.remove('hidden');
-            } finally {
-                loader.classList.add('hidden');
-            }
-        });
-
-        // Initial search
-        fetchImages('nature').then(renderImages);
+        // Initial load
+        search.call({value:'nature'});
+        
+        // Enter key
+        input.addEventListener('keypress',e=>{if(e.key==='Enter')search()});
     </script>
 </body>
 </html>
